@@ -61,12 +61,21 @@ test('GET /documents lista apenas os documentos do usuário, do mais recente par
   await uploadFile({ name: 'segundo.txt', owner: 'joao' });
   await uploadFile({ name: 'de-outro.txt', owner: 'ana' });
 
-  const body = await (await listDocuments('joao')).json();
+  const response = await listDocuments('joao');
+  const body = await response.json();
 
+  assert.strictEqual(response.status, 200);
   assert.deepStrictEqual(
     body.map((document) => document.originalName),
     ['segundo.txt', 'primeiro.txt'],
   );
+});
+
+test('GET /documents retorna lista vazia para usuário sem documentos', async () => {
+  const response = await listDocuments('sem-documentos');
+
+  assert.strictEqual(response.status, 200);
+  assert.deepStrictEqual(await response.json(), []);
 });
 
 test('GET /documents/:id/download devolve o conteúdo com Content-Type e Content-Disposition', async () => {
@@ -94,6 +103,20 @@ test('GET /documents/:id/download retorna 404 para documento de outro usuário',
   });
 
   assert.strictEqual(response.status, 404);
+});
+
+test('GET /documents/:id/download retorna 404 para documento inexistente', async () => {
+  const response = await fetch(`${baseUrl}/documents/inexistente/download`);
+
+  assert.strictEqual(response.status, 404);
+  assert.ok((await response.json()).error);
+});
+
+test('POST /upload rejeita requisição sem arquivo com 400', async () => {
+  const response = await fetch(`${baseUrl}/upload`, { method: 'POST', body: new FormData() });
+
+  assert.strictEqual(response.status, 400);
+  assert.ok((await response.json()).error);
 });
 
 test('POST /upload rejeita campo diferente de "file" com 400', async () => {
