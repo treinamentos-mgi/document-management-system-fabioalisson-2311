@@ -1,9 +1,10 @@
 const { randomUUID } = require('node:crypto');
 const multer = require('multer');
 const config = require('../config');
+const documentFileRepository = require('../repositories/document-file.repository');
 
 const storage = multer.diskStorage({
-  destination: config.storageDir,
+  destination: documentFileRepository.storageDir,
   // Nome gerado pela aplicação; o nome original nunca é usado no disco (RNF-04).
   filename: (req, file, callback) => callback(null, randomUUID()),
 });
